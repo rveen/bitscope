@@ -89,35 +89,35 @@ func (bs *Scope) Trace(pre, post, delay uint) ([]byte, error) {
 	bs.call([]byte("U"))
 
 	b = []byte("D")
-	return bs.callCr(b, 5)
+	return bs.callCr(b, 5, 256)
 }
 
 /* -------------------------------------------------------------------------
    Dump
    -------------------------------------------------------------------------*/
 
-func (bs *Scope) DumpSize(n uint) {
-	b := []byte("1c@00z00s")
-	hex2(n, b, 3)
-	bs.call(b)
-}
-
 // Dump reads the data buffer from the BitScope into a byte array. This buffer
 // contains the data acquired during the trace phase.
 func (bs *Scope) Dump(size uint) ([]byte, error) {
 
-	bs.call([]byte("[31]@[00]s"))                     // BufferMode
-	bs.call([]byte("[08]@[cc]s[09]@[00]s[0a]@[00]s")) // Start address
-	bs.call([]byte("[1e]@[00]s"))                     // DumpMode (raw)
-	bs.call([]byte("[30]@[00]s"))                     // DumpChan
+	b := []byte("[31]@[00]s" + // BufferMode
+		"[08]@[cc]s[09]@[00]s[0a]@[00]s" + // Start address
+		"[1e]@[00]s" + // DumpMode (raw)
+		"[30]@[00]s") // DumpChan
+	bs.call(b)
 
-	bs.DumpSize(size)
+	// Set the dump size (number of data bytes to return)
+	b = []byte("1c@00z00s")
+	hex2(size, b, 3)
+	bs.call(b)
 
-	bs.call([]byte("[16]@[01]s[17]@[00]s")) // DumpRepeat
-	bs.call([]byte("[18]@[01]s[19]@[00]s")) // DumpSend
-	bs.call([]byte("[1a]@[ff]s[1b]@[ff]s")) // DumpSkip
-	bs.call([]byte(">"))
-	return bs.callWait([]byte("A"), 100)
+	b = []byte("[16]@[01]s[17]@[00]s" + // DumpRepeat
+		"[18]@[01]s[19]@[00]s" + // DumpSend
+		"[1a]@[ff]s[1b]@[ff]s" + // DumpSkip
+		">")
+	bs.call(b)
+
+	return bs.callWait([]byte("A"), 100, size+256)
 }
 
 /* -------------------------------------------------------------------------

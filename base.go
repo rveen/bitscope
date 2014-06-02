@@ -112,7 +112,7 @@ func (bs *Scope) call(b []byte) ([]byte, error) {
 }
 
 // call sends data to the instrument and returns its response.
-func (bs *Scope) callWait(b []byte, ms int) ([]byte, error) {
+func (bs *Scope) callWait(b []byte, ms int, bufSize uint) ([]byte, error) {
 
 	n, err := bs.tty.Write(b)
 
@@ -133,7 +133,7 @@ func (bs *Scope) callWait(b []byte, ms int) ([]byte, error) {
 
 	time.Sleep(time.Millisecond * time.Duration(ms))
 
-	r := make([]byte, 256)
+	r := make([]byte, bufSize)
 	n, err = bs.tty.Read(r)
 
 	var c byte
@@ -154,7 +154,7 @@ func (bs *Scope) callWait(b []byte, ms int) ([]byte, error) {
 
 // call sends data to the instrument and returns its response. It waits until
 // it receives the specified number of CR characters (ASCII 13).
-func (bs *Scope) callCr(b []byte, cr int) ([]byte, error) {
+func (bs *Scope) callCr(b []byte, cr int, bufSize uint) ([]byte, error) {
 
 	n, err := bs.tty.Write(b)
 
@@ -169,7 +169,7 @@ func (bs *Scope) callCr(b []byte, cr int) ([]byte, error) {
 	// Read until the specified number of CRs have been read.
 
 	var res []byte
-	r := make([]byte, 256)
+	r := make([]byte, bufSize)
 
 	for {
 
