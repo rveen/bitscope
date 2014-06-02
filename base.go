@@ -8,9 +8,6 @@ import (
 	"github.com/pkg/term"
 	"strings"
 	"time"
-	// "os"
-	// "os/exec"
-	// "syscall"
 )
 
 type Scope struct {
@@ -23,6 +20,9 @@ type Scope struct {
 }
 
 // Open opens a connection to a BitScope instrument.
+//
+// If the ID string returned by the BitScope is not recognized as one of the
+// supported ones, an error is returned.
 func Open(dev string) (*Scope, error) {
 
 	const base string = "/dev/ttyUSB"
@@ -46,16 +46,6 @@ func Open(dev string) (*Scope, error) {
 
 	tty.SetRaw()
 
-	/*
-		tty, err := os.OpenFile(dev, os.O_RDWR|syscall.O_NOCTTY, 0666)
-
-		if err != nil {
-			return nil, err
-		}
-
-		err = exec.Command("stty", "-F", dev, "-icanon", "min", "1", "-icrnl", "-echo").Run()
-	*/
-
 	bs := Scope{tty, "", "", 0}
 
 	bs.ID = bs.Id()
@@ -63,6 +53,9 @@ func Open(dev string) (*Scope, error) {
 		bs.Model = "bs10"
 	} else if strings.HasPrefix(bs.ID, "BS0005") {
 		bs.Model = "bs05"
+	} else {
+		tty.Close()
+		return nil, errors.New("Unsupported model: " + bs.ID)
 	}
 
 	return &bs, nil
@@ -74,6 +67,9 @@ func (bs *Scope) Close() error {
 }
 
 // Id returns a string identifying the VM revision
+//
+// Use bs.ID instead of this function unless you want a to explicitly ask the
+// BitScope for its ID.
 func (bs *Scope) Id() string {
 	b, err := bs.call([]byte("?"))
 	if len(b) == 0 || err != nil {
@@ -82,7 +78,8 @@ func (bs *Scope) Id() string {
 	return strings.TrimSpace(string(b[1:]))
 }
 
-// call sends data to the instrument and returns its response.
+// call sends data to the instrument and returns its response. Its waits a
+// fixed time of 2ms for the response to arrive.
 func (bs *Scope) call(b []byte) ([]byte, error) {
 
 	n, err := bs.tty.Write(b)
@@ -91,30 +88,15 @@ func (bs *Scope) call(b []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	// We want to block until a response is received (but not forever) and
-	// not rely on the message content to decide the end of this response.
-	//
-	// If we set the fd to non blocking, we may return from the call before
-	// we receive a byte. So, a time window is needed, but file reads don't
-	// have a timeout option.
-	//
-	// Ref: https://groups.google.com/d/msg/golang-nuts/QV-zn2JHNt4/-0YxnL7sBc8J
-	//
 	// BUG: to do. For now this works for responses with < 256 bytes
 
-	//time.Sleep(time.Millisecond * 10)
+	time.Sleep(time.Millisecond * 2)
 
 	r := make([]byte, 256)
 	n, err = bs.tty.Read(r)
 
 	var c byte
 
-	/*
-		for i:=0; i<n; i++ {
-		    fmt.Printf("%2x ",r[i])
-
-		}
-		fmt.Println("") */
 	for i := 0; i < n; i++ {
 
 		c = r[i]
@@ -156,12 +138,6 @@ func (bs *Scope) callWait(b []byte, ms int) ([]byte, error) {
 
 	var c byte
 
-	/*
-		for i:=0; i<n; i++ {
-		    fmt.Printf("%2x ",r[i])
-
-		}
-		fmt.Println("") */
 	for i := 0; i < n; i++ {
 
 		c = r[i]
@@ -176,7 +152,8 @@ func (bs *Scope) callWait(b []byte, ms int) ([]byte, error) {
 	return r[0:n], err
 }
 
-// call sends data to the instrument and returns its response.
+// call sends data to the instrument and returns its response. It waits until
+// it receives the specified number of CR characters (ASCII 13).
 func (bs *Scope) callCr(b []byte, cr int) ([]byte, error) {
 
 	n, err := bs.tty.Write(b)
