@@ -4,7 +4,7 @@ package bitscope
 
 import (
 	"errors"
-	"fmt"
+	// "fmt"
 	"github.com/pkg/term"
 	"strings"
 	"time"
@@ -94,7 +94,7 @@ func (bs *Scope) call(b []byte) ([]byte, error) {
 
 	r := make([]byte, 256)
 	n, err = bs.tty.Read(r)
-
+/*
 	var c byte
 
 	for i := 0; i < n; i++ {
@@ -107,7 +107,7 @@ func (bs *Scope) call(b []byte) ([]byte, error) {
 
 	}
 	fmt.Println("")
-
+*/
 	return r[0:n], err
 }
 
@@ -136,6 +136,7 @@ func (bs *Scope) callWait(b []byte, ms int, bufSize uint) ([]byte, error) {
 	r := make([]byte, bufSize)
 	n, err = bs.tty.Read(r)
 
+/*
 	var c byte
 
 	for i := 0; i < n; i++ {
@@ -148,7 +149,7 @@ func (bs *Scope) callWait(b []byte, ms int, bufSize uint) ([]byte, error) {
 
 	}
 	fmt.Println("")
-
+*/
 	return r[0:n], err
 }
 
@@ -194,6 +195,7 @@ func (bs *Scope) callCr(b []byte, cr int, bufSize uint) ([]byte, error) {
 		}
 	}
 
+/*
 	var c byte
 	for i := 0; i < len(res); i++ {
 
@@ -205,7 +207,7 @@ func (bs *Scope) callCr(b []byte, cr int, bufSize uint) ([]byte, error) {
 
 	}
 	fmt.Println("")
-
+*/
 	return res, err
 }
 

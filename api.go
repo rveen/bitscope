@@ -5,7 +5,7 @@
 // This package will expose functionality of the BS10 and BS05 USB oscilloscopes
 // from BitScope, while hiding the the virtual machine inside them.
 //
-// See bitscope.com for more information on PC oscilloscopes.
+// See https://bitscope.com for more information on these PC oscilloscopes.
 //
 package bitscope
 
